@@ -2,6 +2,9 @@
 
 *"* use this source file for your ABAP unit test classes
 
+CLASS ltc_main DEFINITION DEFERRED.
+CLASS zcl_expimp_v6_importer DEFINITION LOCAL FRIENDS ltc_main.
+
 CLASS ltc_helper DEFINITION
       FOR TESTING.
   PUBLIC SECTION.
@@ -222,31 +225,62 @@ CLASS ltc_main IMPLEMENTATION.
     DATA: line TYPE string,
           itab LIKE TABLE OF line.
 
-    itab = VALUE #( ).
     EXPORT the-itab = itab TO DATA BUFFER blob.
-    helper->compare( ).
 
-    itab = VALUE #( ( `Hello` ) ).
-    EXPORT the-itab = itab TO DATA BUFFER blob.
-    helper->compare( ).
+    DATA(dump) = NEW zcl_expimp_v6_importer( blob )->_get_next_data_object( )->get_dump( ).
+
+    cl_abap_unit_assert=>assert_equals( act = dump exp = VALUE string_table(
+        ( |DATA OBJECT:| )
+        ( |  HEADER:| )
+        ( |    06  deep table| )
+        ( |    13  string| )
+        ( |    00  decimals| )
+        ( |    00000008  length| )
+        ( |    0000004F  next data object| )
+        ( |    08  name length| )
+        ( |    00000000  thash| )
+        ( |    00000000000000000000000000000000  typid| )
+        ( |  NAME:| )
+        ( |    THE-ITAB| )
+        ( |  DATA DESCRIPTION:| )
+        ( |    AD  start of table| )
+        ( |    13  string| )
+        ( |    00  decimals| )
+        ( |    00000008  length| )
+        ( |  NO DATA VALUE| ) ) ).
 
   ENDMETHOD.
 
   METHOD itab_with_structure.
 
     DATA: BEGIN OF line,
-            aaa TYPE c LENGTH 5,
-            bbb TYPE i,
+            aaa TYPE string,
           END OF line,
           itab LIKE TABLE OF line.
 
-    itab = VALUE #( ).
     EXPORT the-itab = itab TO DATA BUFFER blob.
-    helper->compare( ).
 
-    itab = VALUE #( ( aaa = |hello| bbb = 8 ) ( aaa = |world| bbb = 20 ) ).
-    EXPORT the-itab = itab TO DATA BUFFER blob.
-    helper->compare( ).
+    DATA(dump) = NEW zcl_expimp_v6_importer( blob )->_get_next_data_object( )->get_dump( ).
+
+    cl_abap_unit_assert=>assert_equals( act = dump exp = VALUE string_table(
+        ( |DATA OBJECT:| )
+        ( |  HEADER:| )
+        ( |    06  deep table| )
+        ( |    13  string| )
+        ( |    00  decimals| )
+        ( |    00000008  length| )
+        ( |    0000004F  next data object| )
+        ( |    08  name length| )
+        ( |    00000000  thash| )
+        ( |    00000000000000000000000000000000  typid| )
+        ( |  NAME:| )
+        ( |    THE-ITAB| )
+        ( |  DATA DESCRIPTION:| )
+        ( |    AD  start of table| )
+        ( |    13  string| )
+        ( |    00  decimals| )
+        ( |    00000008  length| )
+        ( |  NO DATA VALUE| ) ) ).
 
   ENDMETHOD.
 

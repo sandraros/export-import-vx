@@ -11,6 +11,10 @@ CLASS zcl_expimp_importer DEFINITION
         cx_sy_compression_error
         zcx_expimp.
 
+    DATA: transport_header TYPE zif_expimp_vx=>ty_transport_header READ-ONLY,
+          version          TYPE zif_expimp_vx=>ty_transport_header-version READ-ONLY,
+          reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
+
   PROTECTED SECTION.
 
     TYPES: ty_byte TYPE x LENGTH 1.
@@ -24,27 +28,6 @@ CLASS zcl_expimp_importer DEFINITION
       RAISING
         cx_sy_compression_error
         zcx_expimp.
-
-    METHODS assert_blob_curr_byte_and_skip
-      IMPORTING
-        expected_byte TYPE ty_byte
-      RAISING
-        zcx_expimp.
-
-    "! OBSOLETE -> use ZCL_EXPIMP_READER->GET_CURRENT_BYTE <p class="shorttext synchronized" lang="en"></p>
-    "!
-    "! @parameter byte | <p class="shorttext synchronized" lang="en"></p>
-    "! @raising zcx_expimp | <p class="shorttext synchronized" lang="en"></p>
-    METHODS get_current_byte
-      RETURNING
-        VALUE(byte) TYPE ty_byte
-      RAISING
-        zcx_expimp.
-
-    DATA: transport_header TYPE zif_expimp_vx=>ty_transport_header,
-          version          TYPE zif_expimp_vx=>ty_transport_header-version,
-          reader           TYPE REF TO zcl_expimp_reader,
-          current_byte     TYPE ty_byte.
 
   PRIVATE SECTION.
 
@@ -161,37 +144,5 @@ CLASS zcl_expimp_importer IMPLEMENTATION.
     reader->skip_x( transport_header_length ).
 
   ENDMETHOD.
-
-
-  METHOD assert_blob_curr_byte_and_skip.
-
-    DATA: actual_byte TYPE ty_byte.
-
-    TRY.
-
-        reader->read( IMPORTING data = actual_byte ).
-
-      CATCH cx_root INTO DATA(lx).
-        RAISE EXCEPTION TYPE zcx_expimp EXPORTING previous = lx.
-    ENDTRY.
-
-    IF actual_byte <> expected_byte.
-      RAISE EXCEPTION TYPE zcx_expimp.
-    ENDIF.
-
-  ENDMETHOD.
-
-
-  METHOD get_current_byte.
-
-    reader->read( IMPORTING data = current_byte len = DATA(len) ).
-    IF len = 0.
-      RAISE EXCEPTION TYPE zcx_expimp.
-    ENDIF.
-    reader->skip_x( -1 ).
-    byte = current_byte.
-
-  ENDMETHOD.
-
 
 ENDCLASS.

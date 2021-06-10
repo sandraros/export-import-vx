@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_FUGR" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <AREAT>Generate test code</AREAT>
+   <INCLUDES>
+    <SOBJ_NAME>LZEXPIMP_GENERATE_TEST_CODETOP</SOBJ_NAME>
+    <SOBJ_NAME>SAPLZEXPIMP_GENERATE_TEST_CODE</SOBJ_NAME>
+   </INCLUDES>
+   <FUNCTIONS>
+    <item>
+     <FUNCNAME>Z_EXPIMP_GENERATE_TEST_CODE</FUNCNAME>
+     <REMOTE_CALL>R</REMOTE_CALL>
+     <SHORT_TEXT>Generate test code</SHORT_TEXT>
+     <IMPORT>
+      <RSIMP>
+       <PARAMETER>SOURCE_CODE</PARAMETER>
+       <TYP>STRING_TABLE</TYP>
+      </RSIMP>
+     </IMPORT>
+     <EXPORT>
+      <RSEXP>
+       <PARAMETER>DBUF</PARAMETER>
+       <TYP>XSTRING</TYP>
+      </RSEXP>
+     </EXPORT>
+     <DOCUMENTATION>
+      <RSFDO>
+       <PARAMETER>SOURCE_CODE</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+      <RSFDO>
+       <PARAMETER>DBUF</PARAMETER>
+       <KIND>P</KIND>
+      </RSFDO>
+     </DOCUMENTATION>
+    </item>
+   </FUNCTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>

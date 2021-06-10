@@ -87,7 +87,8 @@ CLASS zcl_expimp_reader DEFINITION
         position TYPE i.
 
     DATA: current_byte TYPE ty_byte READ-ONLY,
-          length       TYPE i READ-ONLY.
+          length       TYPE i READ-ONLY,
+          encoding     TYPE abap_encoding READ-ONLY.
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -117,6 +118,8 @@ CLASS zcl_expimp_reader IMPLEMENTATION.
   METHOD create.
 
     reader = NEW zcl_expimp_reader( ).
+
+    reader->encoding = encoding.
 
     reader->conv = cl_abap_conv_in_ce=>create(
             encoding = encoding

@@ -21,6 +21,8 @@ CLASS lcl_dd_table DEFINITION
     METHODS get_rtti REDEFINITION.
     DATA:
       line_type    TYPE REF TO lcl_dd.
+  PRIVATE SECTION.
+    DATA: components           TYPE TABLE OF REF TO lcl_dd.
 ENDCLASS.
 
 CLASS lcl_dd_elementary DEFINITION ABSTRACT
@@ -55,11 +57,16 @@ CLASS lcl_dd_structure DEFINITION
 ENDCLASS.
 
 CLASS lcl_dd_simple DEFINITION
-  INHERITING FROM lcl_dd_elementary.
-
+    INHERITING FROM lcl_dd_elementary.
   PUBLIC SECTION.
-
     METHODS read REDEFINITION.
+ENDCLASS.
+
+CLASS lcl_dd_filler DEFINITION
+    INHERITING FROM lcl_dd.
+  PUBLIC SECTION.
+    METHODS read REDEFINITION.
+    METHODS: get_rtti REDEFINITION.
 
 ENDCLASS.
 
@@ -114,6 +121,61 @@ CLASS lcl_tool IMPLEMENTATION.
 
 ENDCLASS.
 
+CLASS lcl_dump DEFINITION.
+
+  PUBLIC SECTION.
+
+    METHODS constructor
+      IMPORTING
+        importer TYPE REF TO zcl_expimp_v6_importer.
+
+    METHODS get
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
+
+    DATA:
+      importer TYPE REF TO zcl_expimp_v6_importer READ-ONLY,
+      reader   TYPE REF TO zcl_expimp_reader READ-ONLY.
+
+    CLASS-METHODS get_object_id
+      IMPORTING
+        object_id     TYPE zif_expimp_vx=>ty_object_id
+      RETURNING
+        VALUE(result) TYPE string.
+
+    CLASS-METHODS get_dd_id
+      IMPORTING
+        dd_id         TYPE zif_expimp_vx=>ty_dd_id
+      RETURNING
+        VALUE(result) TYPE string.
+
+    CLASS-METHODS get_type
+      IMPORTING
+        type          TYPE zif_expimp_vx=>ty_ityp
+      RETURNING
+        VALUE(result) TYPE string.
+
+  PRIVATE SECTION.
+
+    CONSTANTS:
+      c_object_id LIKE zif_expimp_vx=>c_object_id VALUE zif_expimp_vx=>c_object_id,
+      c_dd_id     LIKE zif_expimp_vx=>c_dd_id VALUE zif_expimp_vx=>c_dd_id,
+      c_ityp      LIKE zif_expimp_vx=>c_ityp VALUE zif_expimp_vx=>c_ityp.
+
+ENDCLASS.
+
+
+
+
+
+
+
+
+
+
+
 CLASS lcl_dd IMPLEMENTATION.
 
   METHOD constructor.
@@ -138,7 +200,7 @@ CLASS lcl_dd IMPLEMENTATION.
 *        get_dd_boxed_component( ).
 
       WHEN c_dd_id-filler.
-*        skip_dd_filler( ).
+        result = NEW lcl_dd_filler( do ).
 
       WHEN c_dd_id-primitive.
         result = NEW lcl_dd_simple( do ).
@@ -175,6 +237,22 @@ CLASS lcl_dd IMPLEMENTATION.
   METHOD get_length.
 
     result = lcl_tool=>get_byte_or_char_length( type = data_description-type length = CONV #( data_description-flen ) ).
+
+  ENDMETHOD.
+
+  METHOD get_dump.
+
+    IF me IS INSTANCE OF lcl_dd_from_header.
+      result = VALUE #(
+          ( |  NO DATA DESCRIPTION - the one from the object header is used| ) ).
+    ELSE.
+      result = VALUE #(
+          ( |  DATA DESCRIPTION:| )
+          ( |    { data_description-id   }  { lcl_dump=>get_dd_id( data_description-id ) }| )
+          ( |    { data_description-type }  { lcl_dump=>get_type( data_description-type ) }| )
+          ( |    { data_description-decs }  decimals| )
+          ( |    { data_description-flen }  length| ) ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -261,15 +339,22 @@ CLASS lcl_dd_table IMPLEMENTATION.
 
     super->read( ).
 
-    CASE reader->get_current_byte( ).
-      WHEN c_dd_id-primitive.
-        line_type = NEW lcl_dd_simple( do )->read( ).
-        reader->read_structure( IMPORTING data = data_description_end ).
-        IF data_description_end-id <> c_dd_id-table-end.
-          RAISE EXCEPTION TYPE zcx_expimp.
-        ENDIF.
-      WHEN OTHERS.
-    ENDCASE.
+    components = value #( ).
+    WHILE reader->get_current_byte( ) <> c_dd_id-table-end.
+      CASE reader->get_current_byte( ).
+        WHEN c_dd_id-primitive.
+          APPEND NEW lcl_dd_simple( do )->read( ) TO components.
+*        line_type = NEW lcl_dd_simple( do )->read( ).
+        WHEN c_dd_id-filler.
+          APPEND NEW lcl_dd_filler( do )->read( ) TO components.
+*        line_type = NEW lcl_dd_filler( do )->read( ).
+        WHEN OTHERS.
+          RAISE EXCEPTION TYPE zcx_expimp EXPORTING textid = zcx_expimp=>invalid_dd_id.
+      ENDCASE.
+    ENDWHILE.
+    reader->read_structure( IMPORTING data = data_description_end ).
+
+*    line_type = NEW lcl_dd_structure( do ).
 
     result = me.
 
@@ -277,7 +362,13 @@ CLASS lcl_dd_table IMPLEMENTATION.
 
   METHOD get_rtti.
 
-    result = cl_abap_tabledescr=>get( line_type->get_rtti( ) ).
+    DATA(rtti_components) = VALUE abap_component_tab(
+        FOR <component> IN components INDEX INTO i
+        ( name = |CMP{ i WIDTH = 4 ALIGN = RIGHT PAD = '0' }|
+          type = <component>->get_rtti( ) ) ).
+
+    DATA(rtti_structure) = cl_abap_structdescr=>get( p_components = rtti_components ).
+    result = cl_abap_tabledescr=>get( p_line_type = rtti_structure ).
 
   ENDMETHOD.
 
@@ -333,6 +424,26 @@ CLASS lcl_dd_simple IMPLEMENTATION.
 
 ENDCLASS.
 
+CLASS lcl_dd_filler IMPLEMENTATION.
+
+  METHOD get_rtti.
+
+  ENDMETHOD.
+
+  METHOD read.
+
+    super->read( ).
+
+    result = me.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+
+
+
+
 CLASS lcl_dv IMPLEMENTATION.
 
   METHOD create.
@@ -371,7 +482,7 @@ CLASS lcl_dv IMPLEMENTATION.
 
     reader->read_structure( IMPORTING data = data_value ).
     position = reader->get_position( ).
-    length = lcl_tool=>get_byte_or_char_length( type = do->dd->get_type( ) length = conv #( data_value-len ) ).
+    length = lcl_tool=>get_byte_or_char_length( type = do->dd->get_type( ) length = CONV #( data_value-len ) ).
 
     result = me.
 
@@ -384,6 +495,10 @@ CLASS lcl_dv IMPLEMENTATION.
       ASSIGN COMPONENT sy-tabix OF STRUCTURE structure TO FIELD-SYMBOL(<component>).
       reader->read( EXPORTING n = dd_component->get_length( ) IMPORTING data = <component> ).
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD get_dump.
 
   ENDMETHOD.
 
@@ -405,7 +520,7 @@ CLASS lcl_dv_string_xstring IMPLEMENTATION.
 
   METHOD read.
 
-    super->READ( ).
+    super->read( ).
 
     position = reader->get_position( ).
     length = lcl_tool=>get_byte_or_char_length( type = do->dd->get_type( ) length = CONV #( data_value-len ) ).
@@ -510,13 +625,13 @@ CLASS lcl_do IMPLEMENTATION.
     reader->read(
         EXPORTING n = CONV #( object_header-nlen )
         IMPORTING data = data_object_name ).
-    data(last_position) = object_header-next - 1.
+    DATA(last_position) = object_header-next - 1.
 
     dd = lcl_dd=>create( me )->read( ).
 
     WHILE reader->get_position( ) <= last_position.
       APPEND lcl_dv=>create( me )->read( ) TO dvs.
-    endwhile.
+    ENDWHILE.
 
     result = me.
 
@@ -526,6 +641,140 @@ CLASS lcl_do IMPLEMENTATION.
 
     result = NEW lcl_do( ).
     result->reader = reader.
+
+  ENDMETHOD.
+
+  METHOD get_dump.
+
+    result = VALUE #(
+        ( |DATA OBJECT:| )
+        ( |  HEADER:| )
+        ( |    { object_header-id    }  { lcl_dump=>get_object_id( object_header-id ) }| )
+        ( |    { object_header-ityp  }  { lcl_dump=>get_type( object_header-ityp ) }| )
+        ( |    { object_header-decs  }  decimals| )
+        ( |    { object_header-leng  }  length| )
+        ( |    { object_header-next  }  next data object| )
+        ( |    { object_header-nlen  }  name length| )
+        ( |    { object_header-thash }  thash| )
+        ( |    { object_header-typid }  typid| )
+        ( |  NAME:| )
+        ( |    { data_object_name }| )
+
+        ( LINES OF dd->get_dump( ) )
+
+        ( LINES OF COND #( WHEN dvs IS INITIAL
+        THEN VALUE #(
+        ( |  NO DATA VALUE| ) )
+        ELSE VALUE #(
+        FOR dv IN dvs
+        ( |  DATA VALUE:| )
+        ( LINES OF dv->get_dump( ) ) ) ) ) ).
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+CLASS lcl_dump IMPLEMENTATION.
+
+  METHOD constructor.
+
+    me->importer = importer.
+    me->reader = importer->reader.
+
+  ENDMETHOD.
+
+  METHOD get.
+
+    DATA: data_objects TYPE TABLE OF REF TO lcl_do.
+
+    TRY.
+        WHILE reader->get_current_byte( ) <> zif_expimp_vx=>c_object_id-end_of_data.
+          APPEND lcl_do=>create( reader )->read( ) TO data_objects.
+        ENDWHILE.
+      CATCH zcx_expimp INTO DATA(error).
+        ASSERT 1 = 1. " debug helper
+    ENDTRY.
+
+    result = VALUE #(
+        ( |HEADER:| )
+        ( |  { importer->transport_header-id              }  always| )
+        ( |  { importer->transport_header-version         }  version| )
+        ( |  { importer->transport_header-intformat       }  integer endianness :  01=big, 02=little| )
+        ( |  { importer->transport_header-floatformat     }  float endianness :  01=big, 02=little| )
+        ( |  { importer->transport_header-compress        }  compressed :  01=no,  02=yes| )
+        ( |  { importer->transport_header-datadescription }  "data description" ??| )
+        ( |  { importer->transport_header-unused1         }  unused| )
+        ( |  { importer->transport_header-codepage        }  Code page US-ASCII ({ reader->encoding })| )
+        ( |  { importer->transport_header-unused2         }  unused| )
+        ( LINES OF VALUE #(
+          FOR do IN data_objects
+          ( LINES OF do->get_dump( ) ) ) ) ).
+
+  ENDMETHOD.
+
+  METHOD get_object_id.
+
+    result = SWITCH #( object_id
+        WHEN c_object_id-deep_structure THEN 'deep structure'
+        WHEN c_object_id-deep_table THEN 'deep table'
+        WHEN c_object_id-end_of_data THEN 'end_of_data'
+        WHEN c_object_id-flat_structure THEN 'flat structure'
+        WHEN c_object_id-flat_table THEN 'flat table'
+        WHEN c_object_id-primitive THEN 'primitive'
+        WHEN c_object_id-string THEN 'string'
+        ELSE 'bug ??' ).
+
+  ENDMETHOD.
+
+  METHOD get_type.
+
+    result = SWITCH #( type
+        WHEN c_ityp-char        THEN 'char      '
+        WHEN c_ityp-date        THEN 'date      '
+        WHEN c_ityp-decfloat16  THEN 'decfloat16'
+        WHEN c_ityp-decfloat34  THEN 'decfloat34'
+        WHEN c_ityp-float       THEN 'float     '
+        WHEN c_ityp-fref        THEN 'fref      '
+        WHEN c_ityp-hex         THEN 'hex       '
+        WHEN c_ityp-int         THEN 'int       '
+        WHEN c_ityp-int1        THEN 'int1      '
+        WHEN c_ityp-int2        THEN 'int2      '
+        WHEN c_ityp-int8        THEN 'int8      '
+        WHEN c_ityp-iref        THEN 'iref      '
+        WHEN c_ityp-num         THEN 'num       '
+        WHEN c_ityp-obj1        THEN 'obj1      '
+        WHEN c_ityp-obj2        THEN 'obj2      '
+        WHEN c_ityp-packed      THEN 'packed    '
+        WHEN c_ityp-ref         THEN 'ref       '
+        WHEN c_ityp-string      THEN 'string    '
+        WHEN c_ityp-struct1     THEN 'struct1   '
+        WHEN c_ityp-struct2     THEN 'struct2   '
+        WHEN c_ityp-table       THEN 'table     '
+        WHEN c_ityp-time        THEN 'time      '
+        WHEN c_ityp-u1          THEN 'u1        '
+        WHEN c_ityp-u2          THEN 'u2        '
+        WHEN c_ityp-unknown1    THEN 'unknown1  '
+        WHEN c_ityp-unknown2    THEN 'unknown2  '
+        WHEN c_ityp-w           THEN 'w         '
+        WHEN c_ityp-xstring     THEN 'xstring   '
+        ELSE 'bug ??' ).
+
+  ENDMETHOD.
+
+  METHOD get_dd_id.
+
+    result = SWITCH #( dd_id
+        WHEN c_dd_id-boxed_component-start THEN 'start of boxed component'
+        WHEN c_dd_id-boxed_component-end THEN 'end of boxed component'
+        WHEN c_dd_id-filler THEN 'filler'
+        WHEN c_dd_id-primitive THEN 'primitive'
+        WHEN c_dd_id-structure-start THEN 'start of structure'
+        WHEN c_dd_id-structure-end THEN 'end of structure'
+        WHEN c_dd_id-structure_include-start THEN 'start of structure include'
+        WHEN c_dd_id-structure_include-end THEN 'end of structure include'
+        WHEN c_dd_id-table-start THEN 'start of table'
+        WHEN c_dd_id-table-end THEN 'end of table'
+        ELSE 'bug ??' ).
 
   ENDMETHOD.
 

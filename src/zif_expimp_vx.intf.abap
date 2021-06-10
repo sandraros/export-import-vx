@@ -228,7 +228,7 @@ INTERFACE zif_expimp_vx
       floatformat     TYPE ty_floatformat,
       "! Compress
       compress        TYPE ty_compress,
-      "! Data description
+      "! Data description (?)
       datadescription TYPE ty_byte,
       unused1         TYPE x LENGTH 2,
       "! SAP Code Page (4 numeric characters in US-ASCII)

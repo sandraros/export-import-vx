@@ -19,13 +19,26 @@ CLASS zcl_expimp_v6_importer DEFINITION
       RAISING
         zcx_expimp.
 
+    METHODS get_dump
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
+
   PROTECTED SECTION.
 
   PRIVATE SECTION.
 
+    METHODS _get_next_data_object
+      RETURNING
+        VALUE(result) TYPE REF TO lcl_do
+      RAISING
+        zcx_expimp.
+
     CONSTANTS:
       c_object_id LIKE zif_expimp_vx=>c_object_id VALUE zif_expimp_vx=>c_object_id,
       c_dd_id     LIKE zif_expimp_vx=>c_dd_id VALUE zif_expimp_vx=>c_dd_id.
+    DATA: do TYPE REF TO lcl_do.
 
 ENDCLASS.
 
@@ -41,9 +54,15 @@ CLASS zcl_expimp_v6_importer IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD _get_next_data_object.
+
+    result = lcl_do=>create( reader )->read( ).
+
+  ENDMETHOD.
+
   METHOD get_next_data_object.
 
-    DATA(do) = lcl_do=>create( reader )->read( ).
+    do = _get_next_data_object( ).
 
     result-name = do->data_object_name.
 
@@ -53,6 +72,12 @@ CLASS zcl_expimp_v6_importer IMPLEMENTATION.
     LOOP AT do->dvs INTO DATA(dv).
       dv->get_value( CHANGING value = <value> ).
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD get_dump.
+
+    result = NEW lcl_dump( me )->get( ).
 
   ENDMETHOD.
 

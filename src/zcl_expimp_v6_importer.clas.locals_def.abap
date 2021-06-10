@@ -23,6 +23,12 @@ CLASS lcl_do DEFINITION.
       RAISING
         zcx_expimp.
 
+    METHODS get_dump
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
+
     DATA: reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
     DATA: object_header    TYPE zif_expimp_v6=>ty_object_header READ-ONLY,
           data_object_name TYPE string READ-ONLY,
@@ -74,6 +80,12 @@ CLASS lcl_dd DEFINITION ABSTRACT.
       RAISING
         zcx_expimp.
 
+    METHODS get_dump
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
+
     DATA: do               TYPE REF TO lcl_do READ-ONLY,
           reader           TYPE REF TO zcl_expimp_reader READ-ONLY,
           "! describes the type of data definition (ID)
@@ -102,6 +114,12 @@ CLASS lcl_dv DEFINITION ABSTRACT.
       RAISING
         zcx_expimp.
 
+    METHODS constructor
+      IMPORTING
+        do TYPE REF TO lcl_do
+      RAISING
+        zcx_expimp.
+
     METHODS read
       RETURNING
         VALUE(result) TYPE REF TO lcl_dv
@@ -114,15 +132,15 @@ CLASS lcl_dv DEFINITION ABSTRACT.
       RAISING
         zcx_expimp.
 
-    METHODS constructor
-      IMPORTING
-        do TYPE REF TO lcl_do
-      RAISING
-        zcx_expimp.
-
     METHODS get_structure
       EXPORTING
         structure TYPE any.
+
+    METHODS get_dump
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
 
     DATA: reader         TYPE REF TO zcl_expimp_reader READ-ONLY,
           data_value     TYPE zif_expimp_v6=>ty_data_value READ-ONLY,
