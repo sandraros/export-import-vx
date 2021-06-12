@@ -31,6 +31,7 @@ CLASS lcl_do DEFINITION.
 
     DATA: reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
     DATA: object_header    TYPE zif_expimp_v6=>ty_object_header READ-ONLY,
+          data_object_name_hex TYPE xstring READ-ONLY,
           data_object_name TYPE string READ-ONLY,
           "! Data Description
           dd               TYPE REF TO lcl_dd READ-ONLY,
@@ -85,6 +86,12 @@ CLASS lcl_dd DEFINITION ABSTRACT.
         VALUE(result) TYPE string_table
       RAISING
         zcx_expimp.
+
+    METHODS get_dump_data_description
+      IMPORTING
+        i_data_description type zif_expimp_v6=>ty_data_description
+      RETURNING
+        VALUE(result) TYPE string_table.
 
     DATA: do               TYPE REF TO lcl_do READ-ONLY,
           reader           TYPE REF TO zcl_expimp_reader READ-ONLY,

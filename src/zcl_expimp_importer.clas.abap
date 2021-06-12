@@ -14,6 +14,11 @@ CLASS zcl_expimp_importer DEFINITION
     DATA: transport_header TYPE zif_expimp_vx=>ty_transport_header READ-ONLY,
           version          TYPE zif_expimp_vx=>ty_transport_header-version READ-ONLY,
           reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
+    TYPES : BEGIN OF ty_test,
+              id   TYPE c LENGTH 30,
+              code TYPE string_table,
+              dbuf TYPE xstring,
+            END OF ty_test.
 
   PROTECTED SECTION.
 

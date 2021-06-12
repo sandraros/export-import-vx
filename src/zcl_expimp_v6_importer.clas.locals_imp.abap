@@ -19,10 +19,12 @@ CLASS lcl_dd_table DEFINITION
   PUBLIC SECTION.
     METHODS read REDEFINITION.
     METHODS get_rtti REDEFINITION.
+    METHODS get_dump REDEFINITION.
     DATA:
       line_type    TYPE REF TO lcl_dd.
   PRIVATE SECTION.
-    DATA: components           TYPE TABLE OF REF TO lcl_dd.
+    DATA: components           TYPE TABLE OF REF TO lcl_dd,
+          data_description_end TYPE zif_expimp_v6=>ty_data_description.
 ENDCLASS.
 
 CLASS lcl_dd_elementary DEFINITION ABSTRACT
@@ -93,8 +95,12 @@ CLASS lcl_dv_table DEFINITION
   PUBLIC SECTION.
     METHODS read REDEFINITION.
     METHODS get_value REDEFINITION.
+    METHODS get_dump REDEFINITION.
     DATA:
       lines TYPE TABLE OF REF TO lcl_dv.
+  PRIVATE SECTION.
+    DATA: table_header   TYPE zif_expimp_v6=>ty_data_value_table,
+          data_value_end TYPE zif_expimp_v6=>ty_data_value_end.
 ENDCLASS.
 
 CLASS lcl_dv_interval DEFINITION
@@ -151,6 +157,12 @@ CLASS lcl_dump DEFINITION.
       RETURNING
         VALUE(result) TYPE string.
 
+    CLASS-METHODS get_dv_id
+      IMPORTING
+        dv_id         TYPE zif_expimp_vx=>ty_dv_id
+      RETURNING
+        VALUE(result) TYPE string.
+
     CLASS-METHODS get_type
       IMPORTING
         type          TYPE zif_expimp_vx=>ty_ityp
@@ -162,6 +174,7 @@ CLASS lcl_dump DEFINITION.
     CONSTANTS:
       c_object_id LIKE zif_expimp_vx=>c_object_id VALUE zif_expimp_vx=>c_object_id,
       c_dd_id     LIKE zif_expimp_vx=>c_dd_id VALUE zif_expimp_vx=>c_dd_id,
+      c_dv_id     LIKE zif_expimp_vx=>c_dv_id VALUE zif_expimp_vx=>c_dv_id,
       c_ityp      LIKE zif_expimp_vx=>c_ityp VALUE zif_expimp_vx=>c_ityp.
 
 ENDCLASS.
@@ -246,13 +259,20 @@ CLASS lcl_dd IMPLEMENTATION.
       result = VALUE #(
           ( |  NO DATA DESCRIPTION - the one from the object header is used| ) ).
     ELSE.
-      result = VALUE #(
-          ( |  DATA DESCRIPTION:| )
-          ( |    { data_description-id   }  { lcl_dump=>get_dd_id( data_description-id ) }| )
-          ( |    { data_description-type }  { lcl_dump=>get_type( data_description-type ) }| )
-          ( |    { data_description-decs }  decimals| )
-          ( |    { data_description-flen }  length| ) ).
+      result = get_dump_data_description( data_description ).
     ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD get_dump_data_description.
+
+    result = VALUE #(
+        ( |  DATA DESCRIPTION:| )
+        ( |    { i_data_description-id   }  { lcl_dump=>get_dd_id( i_data_description-id ) }| )
+        ( |    { i_data_description-type }  { lcl_dump=>get_type( i_data_description-type ) }| )
+        ( |    { i_data_description-decs }  decimals| )
+        ( |    { i_data_description-flen }  length| ) ).
 
   ENDMETHOD.
 
@@ -335,11 +355,10 @@ ENDCLASS.
 CLASS lcl_dd_table IMPLEMENTATION.
 
   METHOD read.
-    DATA: data_description_end TYPE zif_expimp_v6=>ty_data_description.
 
     super->read( ).
 
-    components = value #( ).
+    components = VALUE #( ).
     WHILE reader->get_current_byte( ) <> c_dd_id-table-end.
       CASE reader->get_current_byte( ).
         WHEN c_dd_id-primitive.
@@ -369,6 +388,16 @@ CLASS lcl_dd_table IMPLEMENTATION.
 
     DATA(rtti_structure) = cl_abap_structdescr=>get( p_components = rtti_components ).
     result = cl_abap_tabledescr=>get( p_line_type = rtti_structure ).
+
+  ENDMETHOD.
+
+  METHOD get_dump.
+
+    result = VALUE #(
+        ( LINES OF super->get_dump( ) )
+        ( LINES OF VALUE #( FOR component IN components
+        ( LINES OF component->get_dump( ) )
+        ( LINES OF get_dump_data_description( data_description_end ) ) ) ) ).
 
   ENDMETHOD.
 
@@ -452,19 +481,14 @@ CLASS lcl_dv IMPLEMENTATION.
       WHEN c_dv_id-single.
         RAISE EXCEPTION TYPE zcx_expimp.
 *        result = NEW lcl_dv_single( reader ).
-        ASSERT 1 = 1. " debug helper
       WHEN c_dv_id-boxed_component-start.
         RAISE EXCEPTION TYPE zcx_expimp.
-        ASSERT 1 = 1. " debug helper
       WHEN c_dv_id-string_xstring-start.
         result = NEW lcl_dv_string_xstring( do ).
-        ASSERT 1 = 1. " debug helper
       WHEN c_dv_id-interval-start.
         result = NEW lcl_dv_interval( do ).
-        ASSERT 1 = 1. " debug helper
       WHEN c_dv_id-table-start.
         result = NEW lcl_dv_table( do ).
-        ASSERT 1 = 1. " debug helper
       WHEN OTHERS.
         RAISE EXCEPTION TYPE zcx_expimp.
     ENDCASE.
@@ -499,6 +523,10 @@ CLASS lcl_dv IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_dump.
+
+    result = VALUE #(
+        ( |    { data_value-id }  { lcl_dump=>get_dv_id( data_value-id ) }| )
+        ( |    { data_value-len }  length ({ CONV i( data_value-len ) })| ) ).
 
   ENDMETHOD.
 
@@ -548,10 +576,7 @@ CLASS lcl_dv_table IMPLEMENTATION.
 
   METHOD read.
 
-    DATA:
-      table_header   TYPE zif_expimp_v6=>ty_data_value_table,
-      data_value_end TYPE zif_expimp_v6=>ty_data_value_end.
-
+    super->read( ).
     reader->read_structure( IMPORTING data = table_header ).
 
     WHILE reader->get_current_byte( ) <> c_dv_id-table-end.
@@ -578,6 +603,15 @@ CLASS lcl_dv_table IMPLEMENTATION.
       APPEND INITIAL LINE TO <target_table> ASSIGNING FIELD-SYMBOL(<target_line>).
       source_line->get_value( CHANGING value = <target_line> ).
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD get_dump.
+
+    result = value #(
+        ( lines of super->get_dump( ) )
+        ( |    { table_header-lines }  number of lines ({ conv i( table_header-lines ) })| )
+        ( |    { data_value_end-id }  { lcl_dump=>get_dv_id( data_value_end-id ) }| ) ).
 
   ENDMETHOD.
 
@@ -613,6 +647,7 @@ CLASS lcl_do IMPLEMENTATION.
 
   METHOD read.
 
+    DATA(start_position) = reader->get_position( ).
     IF reader->get_current_byte( ) = c_object_id-end_of_data.
       reader->skip_x( 1 ).
       IF reader->get_position( ) <> reader->length.
@@ -622,14 +657,20 @@ CLASS lcl_do IMPLEMENTATION.
     ENDIF.
 
     reader->read_structure( IMPORTING data = object_header ).
+
+    reader->read(
+        EXPORTING n = CONV #( object_header-nlen )
+        IMPORTING data = data_object_name_hex ).
+    reader->skip_x( - object_header-nlen ).
     reader->read(
         EXPORTING n = CONV #( object_header-nlen )
         IMPORTING data = data_object_name ).
-    DATA(last_position) = object_header-next - 1.
+
+    DATA(position_last_byte_of_data_obj) = start_position + object_header-next - 1.
 
     dd = lcl_dd=>create( me )->read( ).
 
-    WHILE reader->get_position( ) <= last_position.
+    WHILE reader->get_position( ) <= position_last_byte_of_data_obj.
       APPEND lcl_dv=>create( me )->read( ) TO dvs.
     ENDWHILE.
 
@@ -774,6 +815,22 @@ CLASS lcl_dump IMPLEMENTATION.
         WHEN c_dd_id-structure_include-end THEN 'end of structure include'
         WHEN c_dd_id-table-start THEN 'start of table'
         WHEN c_dd_id-table-end THEN 'end of table'
+        ELSE 'bug ??' ).
+
+  ENDMETHOD.
+
+  METHOD get_dv_id.
+
+    result = SWITCH #( dv_id
+        WHEN c_dv_id-boxed_component-start THEN 'start of boxed component'
+        WHEN c_dv_id-boxed_component-end THEN 'end of boxed component'
+        WHEN c_dv_id-interval-start THEN 'start of interval'
+        WHEN c_dv_id-interval-end THEN 'end of interval'
+        WHEN c_dv_id-single THEN 'single'
+        WHEN c_dv_id-string_xstring-start THEN 'start of string/xstring'
+        WHEN c_dv_id-string_xstring-end THEN 'end of string/xstring'
+        WHEN c_dv_id-table-start THEN 'start of table'
+        WHEN c_dv_id-table-end THEN 'end of table'
         ELSE 'bug ??' ).
 
   ENDMETHOD.
