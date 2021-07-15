@@ -11,33 +11,34 @@ CLASS zcl_expimp_v6_importer DEFINITION
         dbuf TYPE xstring
       RAISING
         cx_sy_compression_error
-        zcx_expimp_table.
+        zcx_expimp.
 
     METHODS get_next_data_object
       RETURNING
         VALUE(result) TYPE cpar
       RAISING
-        zcx_expimp_table.
+        zcx_expimp.
 
-*    EVENTS data_object_imported
-*      EXPORTING
-*        VALUE(data_object) TYPE REF TO zcl_expimp_data_object.
+    METHODS get_dump
+      RETURNING
+        VALUE(result) TYPE string_table
+      RAISING
+        zcx_expimp.
 
   PROTECTED SECTION.
 
   PRIVATE SECTION.
 
-*    METHODS get_data_description
-*      RAISING
-*        zcx_expimp_table.
-*
-*    METHODS get_dd
-*      RETURNING
-*        VALUE(result) type ref to lcl_dd.
+    METHODS _get_next_data_object
+      RETURNING
+        VALUE(result) TYPE REF TO lcl_do
+      RAISING
+        zcx_expimp.
 
     CONSTANTS:
-      c_object_id LIKE zif_expimp_v6=>c_object_id VALUE zif_expimp_v6=>c_object_id,
-      c_dd_id     LIKE zif_expimp_v6=>c_dd_id VALUE zif_expimp_v6=>c_dd_id.
+      c_object_id LIKE zif_expimp_vx=>c_object_id VALUE zif_expimp_vx=>c_object_id,
+      c_dd_id     LIKE zif_expimp_vx=>c_dd_id VALUE zif_expimp_vx=>c_dd_id.
+    DATA: do TYPE REF TO lcl_do.
 
 ENDCLASS.
 
@@ -53,77 +54,30 @@ CLASS zcl_expimp_v6_importer IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD _get_next_data_object.
+
+    result = lcl_do=>create( reader )->read( ).
+
+  ENDMETHOD.
+
   METHOD get_next_data_object.
 
-    TYPES : BEGIN OF ty_dv,
-              dref     TYPE REF TO data,
-              rtti     TYPE REF TO cl_abap_datadescr,
-              dd_pos   TYPE i,
-              off      TYPE i,
-              comp_num TYPE i,
-            END OF ty_dv,
-            ty_dvs TYPE STANDARD TABLE OF ty_dv WITH EMPTY KEY.
-    DATA: object_header TYPE zif_expimp_v6=>ty_object_header,
-          data_object_name type string.
-*          lines2        TYPE zcl_expimp_utilities=>ty_dd2_lines.
+    do = _get_next_data_object( ).
 
+    result-name = do->data_object_name.
 
-    "=====================
-    "  Data Object general type and name
-    "=====================
-    reader->read_structure( IMPORTING data = object_header ).
-    reader->read(
-        EXPORTING n = CONV #( object_header-nlen )
-        IMPORTING data = data_object_name ).
+    DATA(rtti) = do->dd->get_rtti( ).
+    CREATE DATA result-dref TYPE HANDLE rtti.
+    ASSIGN result-dref->* TO FIELD-SYMBOL(<value>).
+    LOOP AT do->dvs INTO DATA(dv).
+      dv->get_value( CHANGING value = <value> ).
+    ENDLOOP.
 
-    "=====================
-    "  Data Description (type details)
-    "=====================
-    IF get_current_byte( ) BETWEEN 'A0' AND 'AF'.
-      DATA(dd) = lcl_dd=>create( reader ).
-    ELSE.
-*      " No DD block -> Use the simple data definition described at Object Header
-*      create_default_description( ).
-    ENDIF.
+  ENDMETHOD.
 
-*    normalize_data_description(
-*        IMPORTING
-*            lines2 = lines2
-*        CHANGING
-*            lines  = current-dd-lines ).
-*
-*    IF lines( lines2 ) <> 1.
-*      RAISE EXCEPTION TYPE zcx_expimp_table.
-*    ENDIF.
-*    current-dd-line2 = lines2[ 1 ].
-*
-*    current-dd-rtti ?= create_data_object( current-dd-line2 ).
-*
-*    DATA(dv) = VALUE ty_dv( rtti = current-dd-rtti ).
-*    CREATE DATA dv-dref TYPE HANDLE current-dd-rtti.
-*    ASSIGN dv-dref->* TO FIELD-SYMBOL(<dv_field>).
-*
-*    partab = VALUE #(
-*        BASE partab
-*        ( name = current-object-name
-*          dref = dv-dref ) ).
-*
-*    "=====================
-*    "  Data Value
-*    "=====================
-*    DATA(dvs) = VALUE ty_dvs( ).
-*
-*    DATA(current_byte) = blob_curr_byte( ).
-*    IF current_byte BETWEEN 'B0' AND 'CF'.
-*      current-dv = VALUE #( id = current_byte ).
-*      read_data_object2(
-*          EXPORTING
-*              dd2 = current-dd-line2
-*          IMPORTING
-*              dv  = <dv_field> ).
-*    ELSE.
-*      " other value could be the next Data Description
-*    ENDIF.
+  METHOD get_dump.
+
+    result = NEW lcl_dump( me )->get( ).
 
   ENDMETHOD.
 
