@@ -1,4 +1,4 @@
-CLASS zcl_expimp_reader DEFINITION
+CLASS zcl_expimp_vx_reader DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -51,7 +51,7 @@ CLASS zcl_expimp_reader DEFINITION
       IMPORTING
         expected_byte TYPE ty_byte
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS skip_x
       IMPORTING
@@ -67,7 +67,7 @@ CLASS zcl_expimp_reader DEFINITION
 *  ignore_cerr  type abap_bool default abap_false
         input         TYPE xsequence OPTIONAL
       RETURNING
-        VALUE(reader) TYPE REF TO zcl_expimp_reader
+        VALUE(reader) TYPE REF TO zcl_expimp_vx_reader
       RAISING
         cx_parameter_invalid_range
         cx_sy_codepage_converter_init.
@@ -75,12 +75,12 @@ CLASS zcl_expimp_reader DEFINITION
     "! Read the current byte without changing the position <p class="shorttext synchronized" lang="en"></p>
     "!
     "! @parameter byte | <p class="shorttext synchronized" lang="en"></p>
-    "! @raising zcx_expimp | <p class="shorttext synchronized" lang="en"></p>
+    "! @raising zcx_expimp_vx | <p class="shorttext synchronized" lang="en"></p>
     METHODS get_current_byte
       RETURNING
         VALUE(byte) TYPE ty_byte
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS reposition
       IMPORTING
@@ -99,7 +99,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_expimp_reader IMPLEMENTATION.
+CLASS zcl_expimp_vx_reader IMPLEMENTATION.
 
 
   METHOD convert_struc.
@@ -117,7 +117,7 @@ CLASS zcl_expimp_reader IMPLEMENTATION.
 
   METHOD create.
 
-    reader = NEW zcl_expimp_reader( ).
+    reader = NEW zcl_expimp_vx_reader( ).
 
     reader->encoding = encoding.
 
@@ -135,7 +135,7 @@ CLASS zcl_expimp_reader IMPLEMENTATION.
 
     conv->read( IMPORTING data = current_byte len = DATA(len) ).
     IF len = 0.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
     conv->skip_x( -1 ).
     byte = current_byte.
@@ -209,7 +209,7 @@ CLASS zcl_expimp_reader IMPLEMENTATION.
         data = byte ).
 
     IF byte <> expected_byte.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
 
   ENDMETHOD.

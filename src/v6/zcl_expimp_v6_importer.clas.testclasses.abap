@@ -14,11 +14,11 @@ CLASS ltc_helper DEFINITION
     METHODS compare
       IMPORTING
         dbuf TYPE xstring
-      RAISING zcx_expimp.
+      RAISING zcx_expimp_vx.
     METHODS compare2
       IMPORTING
                 partab2 TYPE tab_cpar
-      RAISING   zcx_expimp.
+      RAISING   zcx_expimp_vx.
     DATA ref_blob TYPE REF TO xstring.
 ENDCLASS.
 
@@ -114,17 +114,17 @@ CLASS ltc_main DEFINITION
     DATA helper TYPE REF TO ltc_helper.
     CLASS-METHODS class_setup.
     TYPES: BEGIN OF ty_tests,
-          primitive_c TYPE zcl_expimp_importer=>ty_test,
-          primitive_i TYPE zcl_expimp_importer=>ty_test,
-          primitive_f TYPE zcl_expimp_importer=>ty_test,
-          primitive_string TYPE zcl_expimp_importer=>ty_test,
-          nested_structure TYPE zcl_expimp_importer=>ty_test,
-          filler TYPE zcl_expimp_importer=>ty_test,
-          clike_flat_structure TYPE zcl_expimp_importer=>ty_test,
-          filler_flat_structure TYPE zcl_expimp_importer=>ty_test,
-          deep_structure TYPE zcl_expimp_importer=>ty_test,
-          itab_without_structure TYPE zcl_expimp_importer=>ty_test,
-          itab_with_structure TYPE zcl_expimp_importer=>ty_test,
+          primitive_c TYPE zcl_expimp_vx_importer=>ty_test,
+          primitive_i TYPE zcl_expimp_vx_importer=>ty_test,
+          primitive_f TYPE zcl_expimp_vx_importer=>ty_test,
+          primitive_string TYPE zcl_expimp_vx_importer=>ty_test,
+          nested_structure TYPE zcl_expimp_vx_importer=>ty_test,
+          filler TYPE zcl_expimp_vx_importer=>ty_test,
+          clike_flat_structure TYPE zcl_expimp_vx_importer=>ty_test,
+          filler_flat_structure TYPE zcl_expimp_vx_importer=>ty_test,
+          deep_structure TYPE zcl_expimp_vx_importer=>ty_test,
+          itab_without_structure TYPE zcl_expimp_vx_importer=>ty_test,
+          itab_with_structure TYPE zcl_expimp_vx_importer=>ty_test,
            END OF ty_tests.
     class-DATA: tests TYPE ty_tests.
 
@@ -185,7 +185,7 @@ CLASS ltc_main IMPLEMENTATION.
         dbuf = CONV xstring( 'FF060201010280003431303300000000020E00000000100000005B01000000000000000000000000'
             && '00000000000000004100AB0E0000000010AA080000000004AF040000000004AA170000000008AC0E'
             && '0000000010BC0000001000000000000000000000000000003822BD04' ) ).
-    tests-clike_flat_structure = VALUE zcl_expimp_importer=>ty_test(
+    tests-clike_flat_structure = VALUE zcl_expimp_vx_importer=>ty_test(
 *        id   = 'clike_flat_structure'
         code = VALUE #(
                 ( `TYPES: BEGIN OF struct,    ` )
@@ -225,7 +225,7 @@ CLASS ltc_main IMPLEMENTATION.
         dbuf = CONV xstring( 'FF060201010280003431303300000000061300000000080000004101000000000000000000000000'
             && '00000000000000004100AD130000000008AA130000000008AE130000000008BE0000000800000000'
             && 'BF04' ) ).
-    tests-itab_with_structure = VALUE zcl_expimp_importer=>ty_test(
+    tests-itab_with_structure = VALUE zcl_expimp_vx_importer=>ty_test(
         id   = 'itab_with_structure'
         code = VALUE #(
                 ( `TYPES: BEGIN OF struct,` )

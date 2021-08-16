@@ -139,11 +139,11 @@ CLASS lcl_dump DEFINITION.
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     DATA:
       importer TYPE REF TO zcl_expimp_v6_importer READ-ONLY,
-      reader   TYPE REF TO zcl_expimp_reader READ-ONLY.
+      reader   TYPE REF TO zcl_expimp_vx_reader READ-ONLY.
 
     CLASS-METHODS get_object_id
       IMPORTING
@@ -341,11 +341,11 @@ CLASS lcl_dd_elementary IMPLEMENTATION.
           WHEN c_ityp-xstring.
             result = cl_abap_elemdescr=>get_xstring( ).
           WHEN OTHERS.
-            RAISE EXCEPTION TYPE zcx_expimp.
+            RAISE EXCEPTION TYPE zcx_expimp_vx.
         ENDCASE.
       CATCH cx_parameter_invalid_range INTO DATA(lx).
         " error has occurred at GET_C, GET_N, GET_P or GET_X.
-        RAISE EXCEPTION TYPE zcx_expimp EXPORTING previous = lx.
+        RAISE EXCEPTION TYPE zcx_expimp_vx EXPORTING previous = lx.
     ENDTRY.
 
   ENDMETHOD.
@@ -368,7 +368,7 @@ CLASS lcl_dd_table IMPLEMENTATION.
           APPEND NEW lcl_dd_filler( do )->read( ) TO components.
 *        line_type = NEW lcl_dd_filler( do )->read( ).
         WHEN OTHERS.
-          RAISE EXCEPTION TYPE zcx_expimp EXPORTING textid = zcx_expimp=>invalid_dd_id.
+          RAISE EXCEPTION TYPE zcx_expimp_vx EXPORTING textid = zcx_expimp_vx=>invalid_dd_id.
       ENDCASE.
     ENDWHILE.
     reader->read_structure( IMPORTING data = data_description_end ).
@@ -417,7 +417,7 @@ CLASS lcl_dd_structure IMPLEMENTATION.
 
     reader->read_structure( IMPORTING data = data_description_end ).
     IF data_description_end-id <> c_dd_id-structure-end.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
 
     result = me.
@@ -479,10 +479,10 @@ CLASS lcl_dv IMPLEMENTATION.
 
     CASE do->reader->get_current_byte( ).
       WHEN c_dv_id-single.
-        RAISE EXCEPTION TYPE zcx_expimp.
+        RAISE EXCEPTION TYPE zcx_expimp_vx.
 *        result = NEW lcl_dv_single( reader ).
       WHEN c_dv_id-boxed_component-start.
-        RAISE EXCEPTION TYPE zcx_expimp.
+        RAISE EXCEPTION TYPE zcx_expimp_vx.
       WHEN c_dv_id-string_xstring-start.
         result = NEW lcl_dv_string_xstring( do ).
       WHEN c_dv_id-interval-start.
@@ -490,7 +490,7 @@ CLASS lcl_dv IMPLEMENTATION.
       WHEN c_dv_id-table-start.
         result = NEW lcl_dv_table( do ).
       WHEN OTHERS.
-        RAISE EXCEPTION TYPE zcx_expimp.
+        RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDCASE.
 
   ENDMETHOD.
@@ -585,7 +585,7 @@ CLASS lcl_dv_table IMPLEMENTATION.
 
     reader->read_structure( IMPORTING data = data_value_end ).
     IF data_value_end-id <> c_dv_id-table-end.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
 
     result = me.
@@ -651,9 +651,9 @@ CLASS lcl_do IMPLEMENTATION.
     IF reader->get_current_byte( ) = c_object_id-end_of_data.
       reader->skip_x( 1 ).
       IF reader->get_position( ) <> reader->length.
-        RAISE EXCEPTION TYPE zcx_expimp.
+        RAISE EXCEPTION TYPE zcx_expimp_vx.
       ENDIF.
-      RAISE EXCEPTION TYPE zcx_expimp EXPORTING textid = zcx_expimp=>end_of_data_objects.
+      RAISE EXCEPTION TYPE zcx_expimp_vx EXPORTING textid = zcx_expimp_vx=>end_of_data_objects.
     ENDIF.
 
     reader->read_structure( IMPORTING data = object_header ).
@@ -732,7 +732,7 @@ CLASS lcl_dump IMPLEMENTATION.
         WHILE reader->get_current_byte( ) <> zif_expimp_vx=>c_object_id-end_of_data.
           APPEND lcl_do=>create( reader )->read( ) TO data_objects.
         ENDWHILE.
-      CATCH zcx_expimp INTO DATA(error).
+      CATCH zcx_expimp_vx INTO DATA(error).
         ASSERT 1 = 1. " debug helper
     ENDTRY.
 

@@ -1,4 +1,4 @@
-CLASS zcl_expimp_tests DEFINITION
+CLASS zcl_expimp_vx_tests DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -20,7 +20,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_expimp_tests IMPLEMENTATION.
+CLASS zcl_expimp_vx_tests IMPLEMENTATION.
   METHOD get.
   result = value #(
     ( id   = 'primitive_c'

@@ -158,7 +158,7 @@ assert 1 = 1.
     ENDTRY.
 
     TRY.
-        DATA(partab) = NEW zcl_expimp_utilities( )->dbuf_import_create_data( CHANGING dbuf = blob ).
+        DATA(partab) = NEW zcl_expimp_vx_utilities( )->dbuf_import_create_data( CHANGING dbuf = blob ).
       CATCH cx_root INTO DATA(lx2).
         DATA(b) = 0.
         b = b + 1.
@@ -183,7 +183,7 @@ assert 1 = 1.
   METHOD compare2.
 
     TRY.
-        DATA(partab) = NEW zcl_expimp_utilities( )->dbuf_import_create_data( CHANGING dbuf = blob ).
+        DATA(partab) = NEW zcl_expimp_vx_utilities( )->dbuf_import_create_data( CHANGING dbuf = blob ).
       CATCH cx_root INTO DATA(lx2).
         cl_abap_unit_assert=>fail( msg = 'error during custom IMPORT' ).
     ENDTRY.

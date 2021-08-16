@@ -1,8 +1,8 @@
 *******************************************************************
 *   System-defined Include-files.                                 *
 *******************************************************************
-  INCLUDE LZEXPIMP_GENERATE_TEST_CODETOP.    " Global Declarations
-  INCLUDE LZEXPIMP_GENERATE_TEST_CODEUXX.    " Function Modules
+  INCLUDE LZEXPIMP_VX_GENER_TEST_CODETOP.    " Global Declarations
+  INCLUDE LZEXPIMP_VX_GENER_TEST_CODEUXX.    " Function Modules
 
 *******************************************************************
 *   User-defined Include-files (if necessary).                    *

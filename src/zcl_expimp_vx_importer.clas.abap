@@ -1,4 +1,4 @@
-CLASS zcl_expimp_importer DEFINITION
+CLASS zcl_expimp_vx_importer DEFINITION
   PUBLIC
   CREATE PUBLIC .
 
@@ -9,11 +9,11 @@ CLASS zcl_expimp_importer DEFINITION
         dbuf TYPE xstring
       RAISING
         cx_sy_compression_error
-        zcx_expimp.
+        zcx_expimp_vx.
 
     DATA: transport_header TYPE zif_expimp_vx=>ty_transport_header READ-ONLY,
           version          TYPE zif_expimp_vx=>ty_transport_header-version READ-ONLY,
-          reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
+          reader           TYPE REF TO zcl_expimp_vx_reader READ-ONLY.
     TYPES : BEGIN OF ty_test,
               id   TYPE c LENGTH 30,
               code TYPE string_table,
@@ -32,7 +32,7 @@ CLASS zcl_expimp_importer DEFINITION
         VALUE(result) TYPE xstring
       RAISING
         cx_sy_compression_error
-        zcx_expimp.
+        zcx_expimp_vx.
 
   PRIVATE SECTION.
 
@@ -40,19 +40,19 @@ CLASS zcl_expimp_importer DEFINITION
       IMPORTING
         dbuf          TYPE xstring
       RETURNING
-        VALUE(reader) TYPE REF TO zcl_expimp_reader.
+        VALUE(reader) TYPE REF TO zcl_expimp_vx_reader.
 
 ENDCLASS.
 
 
 
-CLASS zcl_expimp_importer IMPLEMENTATION.
+CLASS zcl_expimp_vx_importer IMPLEMENTATION.
 
 
   METHOD constructor.
 
     IF xstrlen( dbuf ) < 16.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
 
     IF dbuf+4(1) = '02'. "compressed data
@@ -86,7 +86,7 @@ CLASS zcl_expimp_importer IMPLEMENTATION.
     datalen = xstrlen( dbuf ).
 
     IF datalen < 4.
-      RAISE EXCEPTION TYPE zcx_expimp.
+      RAISE EXCEPTION TYPE zcx_expimp_vx.
     ENDIF.
 
     " re-format the XSTRING into data cluster
@@ -131,7 +131,7 @@ CLASS zcl_expimp_importer IMPLEMENTATION.
     DATA: transport_header_x TYPE x LENGTH 16.
 
     transport_header_x = dbuf(16).
-    reader = zcl_expimp_reader=>create( encoding = '1100' input = transport_header_x ).
+    reader = zcl_expimp_vx_reader=>create( encoding = '1100' input = transport_header_x ).
     reader->read_structure( IMPORTING data = transport_header length = DATA(transport_header_length) ).
 
     version = transport_header-version.
@@ -142,7 +142,7 @@ CLASS zcl_expimp_importer IMPLEMENTATION.
     DATA(codepage) = cl_abap_codepage=>sap_to_http( sap_codepage ).
 
     " Recreate CONV with right code page
-    reader = zcl_expimp_reader=>create(
+    reader = zcl_expimp_vx_reader=>create(
             encoding = CONV #( sap_codepage )
             endian   = COND #( WHEN transport_header-intformat = '01' THEN 'B' ELSE 'L' )
             input    = dbuf ).

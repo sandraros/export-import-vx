@@ -3,7 +3,7 @@
 *&---------------------------------------------------------------------*
 *&
 *&---------------------------------------------------------------------*
-REPORT zexpimp_generate_test_code LINE-SIZE 150.
+REPORT zexpimp_vx_generate_test_code LINE-SIZE 150.
 
 CLASS lcl_app DEFINITION.
   PUBLIC SECTION.
@@ -19,9 +19,9 @@ CLASS lcl_app IMPLEMENTATION.
           code_type_tests         TYPE string_table,
           code_method_class_setup TYPE string_table.
 
-    DATA(tests) = zcl_expimp_tests=>get( ).
+    DATA(tests) = zcl_expimp_vx_tests=>get( ).
     LOOP AT tests REFERENCE INTO DATA(test).
-      CALL FUNCTION 'Z_EXPIMP_GENERATE_TEST_CODE'
+      CALL FUNCTION 'Z_EXPIMP_VX_GENERATE_TEST_CODE'
         DESTINATION 'NONE'
         EXPORTING
           source_code           = test->code

@@ -3,16 +3,16 @@
 *&---------------------------------------------------------------------*
 *&
 *&---------------------------------------------------------------------*
-REPORT zexpimp_demo_1.
+REPORT zexpimp_v6_demo.
 
 class lcl_app definition.
   public section.
     methods itab_with_structure
               RAISING
-                zcx_expimp.
+                zcx_expimp_vx.
     methods compare
               RAISING
-                zcx_expimp.
+                zcx_expimp_vx.
     data: blob type xstring.
 endclass.
 

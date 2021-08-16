@@ -2,7 +2,7 @@
 "! TODO:<ul>
 "! <li></li>
 "! </ul>
-CLASS zcl_expimp_utilities DEFINITION
+CLASS zcl_expimp_vx_utilities DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC.
@@ -689,7 +689,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_expimp_utilities IMPLEMENTATION.
+CLASS zcl_expimp_vx_utilities IMPLEMENTATION.
 
 
   METHOD assert_blob_curr_byte_and_skip.
@@ -914,7 +914,7 @@ CLASS zcl_expimp_utilities IMPLEMENTATION.
     DATA:
       p TYPE ty_ptab_group.
 
-    p = zcl_expimp_utilities=>tab_cpar_to_ptab( varname = 'P' tab_cpar = tab_cpar ).
+    p = zcl_expimp_vx_utilities=>tab_cpar_to_ptab( varname = 'P' tab_cpar = tab_cpar ).
 
     IMPORT (p-ptab) FROM DATA BUFFER dbuf.
     IF sy-subrc <> 0.
@@ -929,7 +929,7 @@ CLASS zcl_expimp_utilities IMPLEMENTATION.
     DATA:
       p TYPE ty_ptab_group.
 
-    p = zcl_expimp_utilities=>tab_cpar_to_ptab( varname = 'P' tab_cpar = tab_cpar ).
+    p = zcl_expimp_vx_utilities=>tab_cpar_to_ptab( varname = 'P' tab_cpar = tab_cpar ).
 
     IMPORT (p-ptab) FROM DATA BUFFER dbuf.
     IF sy-subrc <> 0.
@@ -1133,7 +1133,7 @@ CLASS zcl_expimp_utilities IMPLEMENTATION.
             ty_dvs TYPE STANDARD TABLE OF ty_dv WITH EMPTY KEY.
     DATA: object_header_v04_05 TYPE ty_object_header-v04_05,
           object_header_v01_03 TYPE ty_object_header-v01_03,
-          lines2               TYPE zcl_expimp_utilities=>ty_dd2_lines.
+          lines2               TYPE zcl_expimp_vx_utilities=>ty_dd2_lines.
 
 
     "=====================

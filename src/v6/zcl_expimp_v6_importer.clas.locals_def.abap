@@ -11,25 +11,25 @@ CLASS lcl_do DEFINITION.
 
     CLASS-METHODS create
       IMPORTING
-        reader        TYPE REF TO zcl_expimp_reader
+        reader        TYPE REF TO zcl_expimp_vx_reader
       RETURNING
         VALUE(result) TYPE REF TO lcl_do
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS read
       RETURNING
         VALUE(result) TYPE REF TO lcl_do
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_dump
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
-    DATA: reader           TYPE REF TO zcl_expimp_reader READ-ONLY.
+    DATA: reader           TYPE REF TO zcl_expimp_vx_reader READ-ONLY.
     DATA: object_header    TYPE zif_expimp_v6=>ty_object_header READ-ONLY,
           data_object_name_hex TYPE xstring READ-ONLY,
           data_object_name TYPE string READ-ONLY,
@@ -55,7 +55,7 @@ CLASS lcl_dd DEFINITION ABSTRACT.
       RETURNING
         VALUE(result) TYPE REF TO lcl_dd
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS constructor
       IMPORTING
@@ -73,19 +73,19 @@ CLASS lcl_dd DEFINITION ABSTRACT.
       RETURNING
         VALUE(result) TYPE REF TO lcl_dd
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_rtti ABSTRACT
       RETURNING
         VALUE(result) TYPE REF TO cl_abap_datadescr
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_dump
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_dump_data_description
       IMPORTING
@@ -94,7 +94,7 @@ CLASS lcl_dd DEFINITION ABSTRACT.
         VALUE(result) TYPE string_table.
 
     DATA: do               TYPE REF TO lcl_do READ-ONLY,
-          reader           TYPE REF TO zcl_expimp_reader READ-ONLY,
+          reader           TYPE REF TO zcl_expimp_vx_reader READ-ONLY,
           "! describes the type of data definition (ID)
           start_id         TYPE zif_expimp_vx=>ty_dd_id,
           "! Segment from the Export/Import buffer.
@@ -119,25 +119,25 @@ CLASS lcl_dv DEFINITION ABSTRACT.
       RETURNING
         VALUE(result) TYPE REF TO lcl_dv
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS constructor
       IMPORTING
         do TYPE REF TO lcl_do
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS read
       RETURNING
         VALUE(result) TYPE REF TO lcl_dv
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_value ABSTRACT
       CHANGING
         VALUE(value) TYPE any
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_structure
       EXPORTING
@@ -147,9 +147,9 @@ CLASS lcl_dv DEFINITION ABSTRACT.
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
-    DATA: reader         TYPE REF TO zcl_expimp_reader READ-ONLY,
+    DATA: reader         TYPE REF TO zcl_expimp_vx_reader READ-ONLY,
           data_value     TYPE zif_expimp_v6=>ty_data_value READ-ONLY,
           do             TYPE REF TO lcl_do READ-ONLY,
           "! position of value

@@ -1,5 +1,5 @@
 CLASS zcl_expimp_v6_importer DEFINITION
-  INHERITING FROM zcl_expimp_importer
+  INHERITING FROM zcl_expimp_vx_importer
   PUBLIC
   FINAL
   CREATE PUBLIC .
@@ -11,19 +11,19 @@ CLASS zcl_expimp_v6_importer DEFINITION
         dbuf TYPE xstring
       RAISING
         cx_sy_compression_error
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_next_data_object
       RETURNING
         VALUE(result) TYPE cpar
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     METHODS get_dump
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
   PROTECTED SECTION.
 
@@ -33,7 +33,7 @@ CLASS zcl_expimp_v6_importer DEFINITION
       RETURNING
         VALUE(result) TYPE REF TO lcl_do
       RAISING
-        zcx_expimp.
+        zcx_expimp_vx.
 
     CONSTANTS:
       c_object_id LIKE zif_expimp_vx=>c_object_id VALUE zif_expimp_vx=>c_object_id,

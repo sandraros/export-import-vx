@@ -1,4 +1,4 @@
-CLASS zcx_expimp DEFINITION
+CLASS zcx_expimp_vx DEFINITION
   INHERITING FROM cx_static_check
   PUBLIC
   FINAL
@@ -16,7 +16,7 @@ ENDCLASS.
 
 
 
-CLASS zcx_expimp IMPLEMENTATION.
+CLASS zcx_expimp_vx IMPLEMENTATION.
 
 
   METHOD get_text.

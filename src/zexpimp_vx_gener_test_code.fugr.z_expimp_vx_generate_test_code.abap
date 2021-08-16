@@ -1,11 +1,11 @@
-FUNCTION Z_EXPIMP_GENERATE_TEST_CODE.
-*"----------------------------------------------------------------------
+FUNCTION Z_EXPIMP_VX_GENERATE_TEST_CODE.
+*"--------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
 *"     VALUE(SOURCE_CODE) TYPE  STRING_TABLE
 *"  EXPORTING
 *"     VALUE(DBUF) TYPE  XSTRING
-*"----------------------------------------------------------------------
+*"--------------------------------------------------------------------
   DATA(itab) = VALUE string_table(
       ( |PROGRAM.| )
       ( |FORM export_to_data_buffer| )
